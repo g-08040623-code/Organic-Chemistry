@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrganiChem Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            bg: '#FBF9F1',
+                            card: '#FFFFFF',
+                            primary: '#A5DDD8',
+                            primaryDark: '#76C7C0',
+                            accent: '#F4C2C2',
+                            purple: '#E2D4F0',
+                            yellow: '#FFE8C5',
+                            mint: '#C1E1C1',
+                            rose: '#F8C8DC',
+                            text: '#4A4E69',
+                            muted: '#8D99AE'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FBF9F1;
+            color: #4A4E69;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .pastel-shadow {
+            box-shadow: 0 10px 25px -5px rgba(165, 221, 216, 0.3), 0 8px 10px -6px rgba(226, 212, 240, 0.3);
+        }
+        .option-card {
+            transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+        .option-card:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 md:p-8">
+
+    <!-- Header -->
+    <header class="max-w-4xl mx-auto w-full mb-6">
+        <div class="bg-white rounded-3xl p-6 pastel-shadow border border-pastel-purple/50 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-pastel-primary flex items-center justify-center text-white text-2xl font-bold shadow-sm">
+                    🧪
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-pastel-text tracking-wide">OrganiChem Quiz</h1>
+                    <p class="text-xs text-pastel-muted font-medium">STPM Organic Chemistry Practice</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 bg-pastel-bg p-1.5 rounded-2xl border border-gray-100">
+                <button id="modePracticeBtn" onclick="setMode('practice')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-pastel-text shadow-sm">
+                    <i class="fas fa-book-open mr-1.5"></i>Practice
+                </button>
+                <button id="modeExamBtn" onclick="setMode('exam')" class="px-4 py-2 rounded-xl text-xs font-bold transition-all text-pastel-muted hover:text-pastel-text">
+                    <i class="fas fa-clock mr-1.5"></i>Exam
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto w-full flex-1">
+        
+        <!-- Controls & Filter Bar -->
+        <div id="filterBar" class="bg-white/80 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-pastel-purple/30 flex flex-wrap gap-3 justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-pastel-muted uppercase tracking-wider">Source Paper:</span>
+                <select id="paperFilter" onchange="filterQuestions()" class="bg-pastel-bg border border-pastel-purple/40 text-pastel-text text-xs rounded-xl px-3 py-2 font-semibold outline-none focus:ring-2 focus:ring-pastel-primary">
+                    <option value="all">All Papers (30 Questions)</option>
+                    <option value="962/3">Paper 962/3</option>
+                    <option value="962/3(U3)">Paper 962/3(U3)</option>
+                </select>
+            </div>
+
+            <div class="flex items-center gap-4 text-xs font-bold text-pastel-text">
+                <span id="progressText">Question 1 of 15</span>
+                <div class="w-32 bg-pastel-bg h-2.5 rounded-full overflow-hidden border border-gray-200">
+                    <div id="progressBar" class="bg-pastel-primaryDark h-full w-0 transition-all duration-300"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Card -->
+        <div id="quizCard" class="bg-white rounded-3xl p-6 md:p-8 pastel-shadow border border-pastel-purple/40 mb-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <span id="paperTag" class="text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 bg-pastel-purple/50 text-pastel-text rounded-full">
+                    962/3
+                </span>
+                <span id="questionNumBadge" class="text-xs font-bold text-pastel-muted">
+                    Q1
+                </span>
+            </div>
+
+            <!-- Question Text -->
+            <div class="mb-6">
+                <h2 id="questionText" class="text-lg md:text-xl font-bold text-pastel-text leading-relaxed">
+                    Question text will load here...
+                </h2>
+            </div>
+
+            <!-- Answer Options -->
+            <div id="optionsContainer" class="grid grid-cols-1 gap-3 mb-6">
+                <!-- Options populated dynamically -->
+            </div>
+
+            <!-- Rationale / Feedback Box (Practice Mode) -->
+            <div id="feedbackBox" class="mt-4 p-4 rounded-2xl border hidden">
+                <div class="flex items-start gap-3">
+                    <div id="feedbackIcon" class="text-lg mt-0.5"></div>
+                    <div>
+                        <h4 id="feedbackTitle" class="font-bold text-sm"></h4>
+                        <p id="feedbackRationale" class="text-xs mt-1 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+                <button id="prevBtn" onclick="prevQuestion()" class="px-5 py-2.5 rounded-xl bg-pastel-bg text-pastel-text hover:bg-gray-200 text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fas fa-arrow-left mr-1"></i> Previous
+                </button>
+                <div class="flex gap-2">
+                    <button id="submitBtn" onclick="checkAnswer()" class="px-5 py-2.5 rounded-xl bg-pastel-primary text-white hover:bg-pastel-primaryDark text-xs font-bold transition-all shadow-sm">
+                        Submit Answer
+                    </button>
+                    <button id="nextBtn" onclick="nextQuestion()" class="px-5 py-2.5 rounded-xl bg-pastel-purple text-pastel-text hover:bg-purple-200 text-xs font-bold transition-all">
+                        Next <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Summary Card -->
+        <div id="resultCard" class="bg-white rounded-3xl p-8 pastel-shadow border border-pastel-purple/40 text-center hidden">
+            <div class="w-20 h-20 bg-pastel-mint rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+                🎉
+            </div>
+            <h2 class="text-2xl font-extrabold text-pastel-text mb-2">Quiz Completed!</h2>
+            <p class="text-xs text-pastel-muted mb-6">Here is your performance summary for OrganiChem Quiz.</p>
+
+            <div class="grid grid-cols-3 gap-4 max-w-sm mx-auto mb-8">
+                <div class="bg-pastel-bg p-4 rounded-2xl border border-gray-100">
+                    <div id="totalScore" class="text-2xl font-black text-pastel-primaryDark">0/0</div>
+                    <div class="text-[10px] font-bold text-pastel-muted uppercase tracking-wider mt-1">Score</div>
+                </div>
+                <div class="bg-pastel-bg p-4 rounded-2xl border border-gray-100">
+                    <div id="percentageScore" class="text-2xl font-black text-pastel-text">0%</div>
+                    <div class="text-[10px] font-bold text-pastel-muted uppercase tracking-wider mt-1">Accuracy</div>
+                </div>
+                <div class="bg-pastel-bg p-4 rounded-2xl border border-gray-100">
+                    <div id="timeSpent" class="text-2xl font-black text-pastel-text">--</div>
+                    <div class="text-[10px] font-bold text-pastel-muted uppercase tracking-wider mt-1">Status</div>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-3 flex-wrap">
+                <button onclick="showSolutions()" class="px-6 py-3 rounded-2xl bg-pastel-purple text-pastel-text font-bold text-sm hover:bg-purple-200 transition-all shadow-sm">
+                    <i class="fas fa-list-check mr-2"></i> View Detailed Solutions
+                </button>
+                <button onclick="restartQuiz()" class="px-6 py-3 rounded-2xl bg-pastel-primary text-white font-bold text-sm hover:bg-pastel-primaryDark transition-all shadow-sm">
+                    <i class="fas fa-redo mr-2"></i> Retake Quiz
+                </button>
+            </div>
+        </div>
+
+        <!-- Solutions Overlay Modal -->
+        <div id="solutionsModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex justify-center items-center p-4 hidden">
+            <div class="bg-white rounded-3xl p-6 md:p-8 max-w-3xl w-full max-h-[85vh] flex flex-col border border-pastel-purple/50 shadow-2xl">
+                <div class="flex justify-between items-center pb-4 mb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-pastel-text">Step-by-Step Solutions</h3>
+                        <p class="text-xs text-pastel-muted">Review explanations for every question</p>
+                    </div>
+                    <button onclick="closeSolutions()" class="w-9 h-9 rounded-full bg-pastel-bg text-pastel-text hover:bg-gray-200 flex items-center justify-center transition-all">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div id="solutionsList" class="overflow-y-auto flex-1 space-y-4 pr-2">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div class="pt-4 mt-4 border-t border-gray-100 text-right">
+                    <button onclick="closeSolutions()" class="px-6 py-2.5 rounded-xl bg-pastel-primary text-white text-xs font-bold hover:bg-pastel-primaryDark transition-all">
+                        Close Solutions
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="max-w-4xl mx-auto w-full text-center mt-8 text-xs text-pastel-muted font-medium">
+        OrganiChem Practice Suite • Styled with Soft Pastel Palette
+    </footer>
+
+    <script>
+        const rawQuizData = [
+            // --- Paper 962/3 ---
+            {
+                paper: "962/3",
+                qNum: 1,
+                question: "Naphthalene, C₁₀H₈, is an active component in mothballs. How many C-C sigma (σ) bonds are in the molecule?",
+                options: ["5", "6", "10", "11"],
+                answer: 3,
+                rationale: "Naphthalene consists of two fused benzene rings. It has 10 carbon atoms. There are 11 C-C σ bonds (10 forming the outer perimeter ring structure and 1 shared bridging bond between the two fused rings)."
+            },
+            {
+                paper: "962/3",
+                qNum: 2,
+                question: "Based on pKa values: Benzoic acid (4.20), 4-Nitrobenzoic acid (3.44), Anilinium ion (4.58), 4-Nitroanilinium ion (0.98). Which statement is true?",
+                options: [
+                    "Anilinium ion is the most acidic species.",
+                    "4-Nitroanilinium ion is the most stable species.",
+                    "4-Nitroaniline is more stable than 4-nitrobenzoate ion.",
+                    "Benzoate ion is a weaker conjugate base than 4-nitrobenzoate ion."
+                ],
+                answer: 1,
+                rationale: "4-Nitroanilinium ion has the lowest pKa (0.98), making it the strongest acid. A stronger acid has a more stable conjugate base/dissociated form, and electron-withdrawing NO₂ groups stabilize charges effectively."
+            },
+            {
+                paper: "962/3",
+                qNum: 3,
+                question: "Which statement about the reaction between methylbenzene and chlorine in the presence of light is true?",
+                options: [
+                    "The reaction is a free-radical addition reaction.",
+                    "Hydrogen chloride is formed in the termination step.",
+                    "(Chloromethyl)benzene is formed in the first propagation step.",
+                    "1-Chloro-4-methylbenzene is one of the products of the reaction."
+                ],
+                answer: 2,
+                rationale: "In the light-induced free-radical side-chain substitution of methylbenzene, chlorine radicals abstract a hydrogen from the methyl group in the first propagation step to form the benzyl radical, which then gives (chloromethyl)benzene."
+            },
+            {
+                paper: "962/3",
+                qNum: 4,
+                question: "Ethene undergoes addition due to C=C bond. Which is NOT true of the bromination of ethene?",
+                options: [
+                    "The C=C bond readily accepts an electrophile.",
+                    "Bromonium ion is formed as an intermediate.",
+                    "A π bond is converted to a σ bond.",
+                    "The product formed is 1,1-dibromoethane."
+                ],
+                answer: 3,
+                rationale: "The addition of Br₂ across the C=C double bond yields 1,2-dibromoethane (vicinal dibromide), NOT 1,1-dibromoethane (geminal dibromide)."
+            },
+            {
+                paper: "962/3",
+                qNum: 5,
+                question: "Ethylbenzene reacts with conc. HNO₃ and conc. H₂SO₄ followed by acidified KMnO₄. What is the final product formed?",
+                options: [
+                    "4-Nitrobenzoic acid",
+                    "2,4-Dinitrobenzoic acid / 4-nitro derivatives",
+                    "Benzoic acid with nitro substitution at 2,4-positions",
+                    "4-Nitrobenzoic acid / 2-Nitrobenzoic acid isomers"
+                ],
+                answer: 0,
+                rationale: "Nitration of ethylbenzene occurs preferentially at the ortho/para positions (para major). Subsequent oxidation of the alkyl side chain with acidified KMnO₄ oxidizes the ethyl group to -COOH, yielding 4-nitrobenzoic acid."
+            },
+            {
+                paper: "962/3",
+                qNum: 6,
+                question: "Compound X (38.7% C, 9.70% H, 51.6% O). 0.890 g occupies 477 cm³ at 400 K & 100 kPa. Which statement is NOT true?",
+                options: [
+                    "The empirical formula of X is CH₃O.",
+                    "Compound X is 1,2-ethanediol.",
+                    "One mole of X reacts with Na releasing two moles of H₂ gas.",
+                    "Compound X is used as an antifreeze in the car radiator."
+                ],
+                answer: 2,
+                rationale: "1 mole of a diol (1,2-ethanediol) containing 2 -OH groups reacts with excess sodium to release 1 mole of H₂ gas (not 2 moles)."
+            },
+            {
+                paper: "962/3",
+                qNum: 7,
+                question: "Which organic compound produces a white precipitate in the shortest time when shaken with ethanolic AgNO₃ at room temp?",
+                options: [
+                    "1-chloropropane",
+                    "2-chloropropane",
+                    "2-chloro-2-methylpropane (tertiary alkyl halide)",
+                    "1-chloro-4-nitrobenzene"
+                ],
+                answer: 2,
+                rationale: "Tertiary alkyl halides undergo rapid SN1 substitution to form a stable tertiary carbocation intermediate, producing AgCl precipitate almost instantly."
+            },
+            {
+                paper: "962/3",
+                qNum: 8,
+                question: "Which statement best explains the low reactivity of chlorobenzene toward hydrolysis?",
+                options: [
+                    "The non-bonding electrons of Cl are delocalised into the benzene ring.",
+                    "The Cl atom withdraws the electron clouds from the benzene ring.",
+                    "The Cl atom is strongly bonded to the benzene ring.",
+                    "The C-Cl bond in chlorobenzene is shorter."
+                ],
+                answer: 0,
+                rationale: "Delocalization of unshared electron pairs on the chlorine atom into the aromatic π-system gives partial double-bond character to the C-Cl bond, strengthening it and resisting nucleophilic cleavage."
+            },
+            {
+                paper: "962/3",
+                qNum: 9,
+                question: "Which compound forms a white precipitate when heated with aqueous NaOH followed by acidification?",
+                options: [
+                    "2-chloropropane",
+                    "2-chloro-2-methylpropane",
+                    "Benzoyl chloride / acyl halide derivative",
+                    "Chlorobenzene"
+                ],
+                answer: 2,
+                rationale: "Acyl halides hydrolyze readily to form carboxylate ions, which upon acidification yield insoluble aromatic carboxylic acid (white precipitate)."
+            },
+            {
+                paper: "962/3",
+                qNum: 10,
+                question: "Phenylethene is produced when compound X reacts with concentrated H₂SO₄ at 180°C. What could compound X be?",
+                options: [
+                    "Phenylmethanol",
+                    "1-Phenylethanol (or 2-Phenylethanol)",
+                    "1-Phenyl-1-propanol",
+                    "2-Phenyl-1-propanol"
+                ],
+                answer: 1,
+                rationale: "Acid-catalyzed dehydration of 1-phenylethanol or 2-phenylethanol yields phenylethene (styrene)."
+            },
+            {
+                paper: "962/3",
+                qNum: 11,
+                question: "Preparation scheme for phenylethanone: CH₃CH₂OH →(I)→ CH₃COOH →(II)→ CH₃COCl →(III)→ C₆H₅COCH₃. Reagents I, II, III are:",
+                options: [
+                    "I: KMnO₄/H⁺, II: PCl₅, III: C₆H₆ / AlCl₃",
+                    "I: Conc. H₂SO₄, II: HCl, III: C₆H₅OH",
+                    "I: K₂Cr₂O₇/H⁺, II: Cl₂, III: O₂",
+                    "I: OH⁻, II: PCl₃, III: Cl₂"
+                ],
+                answer: 0,
+                rationale: "Stage I requires strong oxidation (KMnO₄/H⁺), Stage II converts acid to acyl chloride (PCl₅), and Stage III is Friedel-Crafts acylation of benzene using C₆H₆/AlCl₃."
+            },
+            {
+                paper: "962/3",
+                qNum: 12,
+                question: "Which reagent can be used to distinguish an aldehyde (P) from a methyl ketone (Q)?",
+                options: [
+                    "Alkaline iodine solution (Iodoform test)",
+                    "2,4-Dinitrophenylhydrazine",
+                    "Bromine and iron(III) bromide",
+                    "Acidified potassium dichromate(VI) solution"
+                ],
+                answer: 0,
+                rationale: "Alkaline iodine yields a yellow triiodomethane precipitate with methyl ketones (Q) but not with simple non-methyl aldehydes or non-methyl ketones."
+            },
+            {
+                paper: "962/3",
+                qNum: 13,
+                question: "Which two compounds are formed during esterification of ethanoic acid with ethanol labelled with Oxygen-18 (¹⁸O)?",
+                options: [
+                    "CH₃CO¹⁸OCH₂CH₃ and H₂O",
+                    "CH₃CH₂COOCH₃ and H₂¹⁸O",
+                    "CH₃COOCH₂CH₃ and H₂¹⁸O",
+                    "CH₃CH₂CO¹⁸OCH₃ and H₂O"
+                ],
+                answer: 0,
+                rationale: "During esterification, the -OH group is lost from the carboxylic acid while the H atom is lost from the alcohol. Thus, ¹⁸O remains attached to the alkyl chain forming CH₃CO¹⁸OCH₂CH₃."
+            },
+            {
+                paper: "962/3",
+                qNum: 14,
+                question: "Compound X is optically active and its aqueous solution acts as a buffer. What could compound X be?",
+                options: [
+                    "Lactic acid / 2-hydroxypropanoic acid",
+                    "2-aminobutanoic acid (an amino acid with a chiral center)",
+                    "2-hydroxy-2-methylpropanoic acid",
+                    "Dimethyl malonic acid derivative"
+                ],
+                answer: 1,
+                rationale: "Amino acids containing a chiral carbon (such as 2-aminobutanoic acid) form zwitterions in solution, giving them buffering capabilities while retaining optical activity."
+            },
+            {
+                paper: "962/3",
+                qNum: 15,
+                question: "The repeating unit for a plastic is -[-HN-(CH₂)₅-CO-]-. Which statement is true?",
+                options: [
+                    "It is a copolymer.",
+                    "It is a polyester.",
+                    "Its monomer is an amino acid (6-aminohexanoic acid).",
+                    "It is formed from condensation between oxalic acid and diamine."
+                ],
+                answer: 2,
+                rationale: "The polyamide Nylon-6 has a single monomer unit derived from an amino acid / caprolactam containing both an amine and a carboxyl function."
+            },
+
+            // --- Paper 962/3(U3) ---
+            {
+                paper: "962/3(U3)",
+                qNum: 1,
+                question: "Ethyne, HC≡CH polymerises to polyethyne [-(CH=CH)-]ₙ. What happens during this polymerisation?",
+                options: [
+                    "The C-C bonds become stronger.",
+                    "The number of pi bonds increases.",
+                    "The hybridisation changes from sp to sp².",
+                    "The bond angle changes from 180° to 120°."
+                ],
+                answer: 3,
+                rationale: "Ethyne has sp carbon atoms (180°). In polyethyne, carbons are sp² hybridized with bond angles changing to ~120°."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 2,
+                question: "Combustion of 16.5 g liquid containing C, H, O gives 31.6 g CO₂ and 19.3 g H₂O. What is its empirical formula?",
+                options: ["CH₄O", "C₂H₄O", "C₂H₆O", "C₃H₈O"],
+                answer: 2,
+                rationale: "Mass of C = 31.6 × (12/44) = 8.62 g. Mass of H = 19.3 × (2/18) = 2.14 g. Mass of O = 16.5 - (8.62 + 2.14) = 5.74 g. Molar ratio C:H:O ≈ 2:6:1 (C₂H₆O)."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 3,
+                question: "Cortisone structure contains multiple functional groups. Cortisone can act as:",
+                options: [
+                    "alkene, tertiary alcohol and ketone",
+                    "alkene, primary alcohol and aldehyde",
+                    "alkene, secondary alcohol and carboxylic acid",
+                    "aldehyde, primary alcohol and carboxylic acid"
+                ],
+                answer: 0,
+                rationale: "Cortisone contains a steroid skeleton with a C=C double bond (alkene), ketone carbonyl groups, and tertiary/primary hydroxy groups."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 4,
+                question: "Which statement is true of cyclohexane, cyclohexene, and benzene?",
+                options: [
+                    "The three compounds undergo addition reaction.",
+                    "The three compounds have the same C-C bond length.",
+                    "The three compounds undergo Friedel-Crafts alkylation.",
+                    "The three compounds undergo halogenation under different conditions."
+                ],
+                answer: 3,
+                rationale: "Cyclohexane reacts with halogens via free radicals, cyclohexene undergoes electrophilic addition readily, and benzene requires a Lewis acid catalyst for electrophilic substitution."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 5,
+                question: "Chlorination of methylbenzene involves several steps. Which stage represents a propagation step?",
+                options: [
+                    "Cl₂ → 2Cl•",
+                    "C₆H₅CH₃ + Cl• → C₆H₅CH₂• + HCl",
+                    "C₆H₅CH₂• + C₆H₅CH₂• → C₆H₅CH₂CH₂C₆H₅",
+                    "Cl• + Cl• → Cl₂"
+                ],
+                answer: 1,
+                rationale: "A propagation step reacts a free radical with a neutral molecule to produce a new free radical and product (Cl• + C₆H₅CH₃ → C₆H₅CH₂• + HCl)."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 6,
+                question: "(4-Methylphenyl)ethene undergoes the following types of reactions EXCEPT:",
+                options: [
+                    "electrophilic addition",
+                    "nucleophilic addition",
+                    "free-radical substitution",
+                    "electrophilic substitution"
+                ],
+                answer: 1,
+                rationale: "Non-activated alkenes and aromatic rings undergo electrophilic additions/substitutions and free radical reactions, but NOT nucleophilic addition."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 7,
+                question: "CH₃CH₂Br → X →(cold KMnO₄/OH⁻)→ Y → Polymer Z. Identify X, Y, and Z:",
+                options: [
+                    "X: CH₂=CH₂, Y: (COOH)₂, Z: Nylon",
+                    "X: CH₂=CH₂, Y: CH₂OHCH₂OH, Z: Terylene",
+                    "X: CH₃CH₂OH, Y: CH₃COONa, Z: Nylon",
+                    "X: CH₃CH₂OH, Y: CH₂OHCH₂OH, Z: Terylene"
+                ],
+                answer: 1,
+                rationale: "Dehydrohalogenation of Bromoethane gives ethene (X). Cold alkaline KMnO₄ oxidizes ethene to ethane-1,2-diol (Y), which polymerizes with terephthalic acid to form Terylene (Z)."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 8,
+                question: "Ethylmagnesium chloride (Grignard reagent) may be used to prepare:",
+                options: ["ethene", "ethanol", "1-propanol", "ethanoic acid"],
+                answer: 2,
+                rationale: "Reaction of Ethylmagnesium chloride (CH₃CH₂MgCl) with methanal (HCHO) followed by hydrolysis yields a primary alcohol with one extra carbon: 1-propanol."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 9,
+                question: "Which statement about fructose (monosaccharide ketohexose) is correct?",
+                options: [
+                    "It is insoluble in water.",
+                    "It has three chiral carbons.",
+                    "It reacts with an aqueous solution of sodium carbonate.",
+                    "It decolourises an acidified solution of potassium manganate(VII)."
+                ],
+                answer: 3,
+                rationale: "Fructose contains multiple readily oxidizable hydroxy groups (-OH) and a ketone group, which decolorize warm acidified KMnO₄ solution."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 10,
+                question: "Eugenol contains phenol (-OH), ether (-OCH₃), and alkene (-CH₂CH=CH₂) groups. Which reagent reacts with eugenol?",
+                options: [
+                    "Aqueous solution of sodium carbonate",
+                    "Aqueous solution of bromine",
+                    "Sodium hydrogencarbonate",
+                    "Ethanoic acid without acid catalyst"
+                ],
+                answer: 1,
+                rationale: "The double bond in the allyl group and the activated aromatic ring react rapidly with aqueous bromine."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 11,
+                question: "Which is NOT true of an aldehyde?",
+                options: [
+                    "It has a polar carbonyl bond.",
+                    "It can act as oxidising and reducing agents.",
+                    "It forms an orange precipitate with 2,4-dinitrophenylhydrazine.",
+                    "It has a carbonyl carbon atom which has a tendency to react with an electrophilic reagent."
+                ],
+                answer: 3,
+                rationale: "The carbonyl carbon is electron-deficient (δ+) and therefore reacts with NUCLEOPHILIC reagents, not electrophilic reagents."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 12,
+                question: "Valine is an amino acid. Which statement is true of valine?",
+                options: [
+                    "Valine reacts with ethanoyl chloride to form an ester.",
+                    "Valine undergoes condensation reaction with glycine.",
+                    "Ammonium salt is formed when valine reacts with nitrous acid.",
+                    "Ammonia gas is liberated when valine reacts with aqueous sodium hydroxide."
+                ],
+                answer: 1,
+                rationale: "Valine contains both an amino group and a carboxyl group, allowing it to condense with glycine to form a dipeptide linked by a peptide bond."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 13,
+                question: "Organic compound X fumes in air and reacts with alkaline phenol to produce Y. What are X and Y?",
+                options: [
+                    "X: CH₃COCl, Y: CH₃COOC₆H₅",
+                    "X: CH₃COCl, Y: C₆H₅COOCH₃",
+                    "X: CH₃CH₂Cl, Y: CH₃COOC₆H₅",
+                    "X: CH₃CH₂Cl, Y: C₆H₅COOCH₂CH₃"
+                ],
+                answer: 0,
+                rationale: "Ethanoyl chloride (CH₃COCl) fumes in moist air due to HCl evolution and reacts with phenoxide to form phenyl ethanoate (CH₃COOC₆H₅)."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 14,
+                question: "Compound X dissolves in HCl and decolourises bromine water to form a white precipitate. What is X?",
+                options: ["Phenylamine (Aniline)", "Phenol", "Phenylmethanol", "Phenylethene"],
+                answer: 0,
+                rationale: "Phenylamine is basic so it dissolves in HCl. Its highly activated benzene ring reacts with bromine water to form 2,4,6-tribromoaniline as a white precipitate."
+            },
+            {
+                paper: "962/3(U3)",
+                qNum: 15,
+                question: "Structure: -[-(CH₂)₅-NH-CO-(CH₂)₅-NH-CO-]-. Which statement is true?",
+                options: [
+                    "It is an elastomer.",
+                    "It can be oxidised easily.",
+                    "It can act as a buffer.",
+                    "It can be hydrolysed."
+                ],
+                answer: 3,
+                rationale: "The amide / peptide linkages (-NH-CO-) in polyamides can undergo acid or alkaline hydrolysis into their carboxylic and amine monomer components."
+            }
+        ];
+
+        let filteredQuestions = [];
+        let currentIndex = 0;
+        let userAnswers = {};
+        let mode = 'practice';
+
+        // Fisher-Yates Shuffle Algorithm
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Deep copy and shuffle questions & option positions
+        function prepareShuffledData(sourceData) {
+            const dataCopy = JSON.parse(JSON.stringify(sourceData));
+            
+            // 1. Shuffle questions order
+            shuffleArray(dataCopy);
+
+            // 2. Shuffle options inside each question & remap the answer index
+            dataCopy.forEach(q => {
+                const correctAnswerText = q.options[q.answer];
+                shuffleArray(q.options);
+                q.answer = q.options.indexOf(correctAnswerText);
+            });
+
+            return dataCopy;
+        }
+
+        function initQuiz() {
+            filterQuestions();
+        }
+
+        function setMode(newMode) {
+            mode = newMode;
+            document.getElementById('modePracticeBtn').className = mode === 'practice' 
+                ? 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-pastel-text shadow-sm' 
+                : 'px-4 py-2 rounded-xl text-xs font-bold transition-all text-pastel-muted hover:text-pastel-text';
+            
+            document.getElementById('modeExamBtn').className = mode === 'exam' 
+                ? 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-white text-pastel-text shadow-sm' 
+                : 'px-4 py-2 rounded-xl text-xs font-bold transition-all text-pastel-muted hover:text-pastel-text';
+
+            document.getElementById('submitBtn').style.display = mode === 'practice' ? 'inline-block' : 'none';
+            renderQuestion();
+        }
+
+        function filterQuestions() {
+            const paper = document.getElementById('paperFilter').value;
+            let subset = [];
+            if (paper === 'all') {
+                subset = rawQuizData;
+            } else {
+                subset = rawQuizData.filter(q => q.paper === paper);
+            }
+
+            // Shuffle questions & options every time filter changes or quiz resets
+            filteredQuestions = prepareShuffledData(subset);
+            currentIndex = 0;
+            userAnswers = {};
+            document.getElementById('quizCard').classList.remove('hidden');
+            document.getElementById('resultCard').classList.add('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            if (filteredQuestions.length === 0) return;
+
+            const q = filteredQuestions[currentIndex];
+            document.getElementById('paperTag').innerText = q.paper;
+            document.getElementById('questionNumBadge').innerText = `Question ${currentIndex + 1} of ${filteredQuestions.length}`;
+            document.getElementById('questionText').innerText = q.question;
+
+            // Progress Bar
+            const progressPct = ((currentIndex + 1) / filteredQuestions.length) * 100;
+            document.getElementById('progressBar').style.width = `${progressPct}%`;
+            document.getElementById('progressText').innerText = `Question ${currentIndex + 1} of ${filteredQuestions.length}`;
+
+            // Render Options
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = '';
+
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            const currentAnswer = userAnswers[currentIndex];
+
+            q.options.forEach((opt, idx) => {
+                const isSelected = currentAnswer !== undefined && currentAnswer.val === idx;
+
+                const optEl = document.createElement('button');
+                optEl.type = "button";
+                optEl.setAttribute('data-idx', idx);
+                optEl.onclick = () => selectOption(idx);
+
+                optEl.className = `option-card w-full text-left border-2 rounded-2xl p-4 flex items-center gap-3 transition-all ${
+                    isSelected 
+                        ? 'border-pastel-primaryDark bg-pastel-primary/30 ring-2 ring-pastel-primary/40' 
+                        : 'border-gray-100 bg-pastel-bg/50 hover:border-pastel-primary'
+                }`;
+
+                optEl.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl bg-white border border-pastel-purple/50 flex items-center justify-center text-xs font-bold text-pastel-text shadow-sm shrink-0">
+                        ${optionLabels[idx]}
+                    </div>
+                    <div class="text-xs md:text-sm font-semibold text-pastel-text flex-1">${opt}</div>
+                `;
+                container.appendChild(optEl);
+            });
+
+            // Feedback update
+            const feedbackBox = document.getElementById('feedbackBox');
+            if (mode === 'practice' && currentAnswer !== undefined && currentAnswer.submitted) {
+                showFeedback(currentAnswer.val);
+            } else {
+                feedbackBox.classList.add('hidden');
+            }
+
+            // Controls
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            if (currentIndex === filteredQuestions.length - 1) {
+                document.getElementById('nextBtn').innerHTML = 'Finish <i class="fas fa-check ml-1"></i>';
+            } else {
+                document.getElementById('nextBtn').innerHTML = 'Next <i class="fas fa-arrow-right ml-1"></i>';
+            }
+        }
+
+        function selectOption(idx) {
+            const isSubmitted = userAnswers[currentIndex] ? userAnswers[currentIndex].submitted : false;
+            userAnswers[currentIndex] = { val: idx, submitted: isSubmitted };
+
+            const container = document.getElementById('optionsContainer');
+            const buttons = container.querySelectorAll('.option-card');
+
+            buttons.forEach(btn => {
+                const btnIdx = parseInt(btn.getAttribute('data-idx'));
+                if (btnIdx === idx) {
+                    btn.className = 'option-card w-full text-left border-2 rounded-2xl p-4 flex items-center gap-3 transition-all border-pastel-primaryDark bg-pastel-primary/30 ring-2 ring-pastel-primary/40';
+                } else {
+                    btn.className = 'option-card w-full text-left border-2 rounded-2xl p-4 flex items-center gap-3 transition-all border-gray-100 bg-pastel-bg/50 hover:border-pastel-primary';
+                }
+            });
+
+            if (mode === 'practice' && isSubmitted) {
+                showFeedback(idx);
+            }
+        }
+
+        function checkAnswer() {
+            if (userAnswers[currentIndex] === undefined) return;
+            userAnswers[currentIndex].submitted = true;
+            showFeedback(userAnswers[currentIndex].val);
+        }
+
+        function showFeedback(selectedIdx) {
+            const q = filteredQuestions[currentIndex];
+            const feedbackBox = document.getElementById('feedbackBox');
+            const isCorrect = selectedIdx === q.answer;
+
+            feedbackBox.classList.remove('hidden', 'bg-pastel-rose/30', 'border-pastel-rose', 'bg-pastel-mint/30', 'border-pastel-mint');
+
+            if (isCorrect) {
+                feedbackBox.classList.add('bg-pastel-mint/30', 'border-pastel-mint');
+                document.getElementById('feedbackIcon').innerHTML = '✅';
+                document.getElementById('feedbackTitle').innerText = 'Correct!';
+                document.getElementById('feedbackTitle').className = 'font-bold text-sm text-green-800';
+            } else {
+                feedbackBox.classList.add('bg-pastel-rose/30', 'border-pastel-rose');
+                document.getElementById('feedbackIcon').innerHTML = '❌';
+                document.getElementById('feedbackTitle').innerText = 'Incorrect';
+                document.getElementById('feedbackTitle').className = 'font-bold text-sm text-rose-800';
+            }
+
+            document.getElementById('feedbackRationale').innerText = q.rationale;
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIndex < filteredQuestions.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('quizCard').classList.add('hidden');
+            document.getElementById('resultCard').classList.remove('hidden');
+
+            let score = 0;
+            filteredQuestions.forEach((q, idx) => {
+                if (userAnswers[idx] && userAnswers[idx].val === q.answer) {
+                    score++;
+                }
+            });
+
+            const pct = Math.round((score / filteredQuestions.length) * 100);
+            document.getElementById('totalScore').innerText = `${score}/${filteredQuestions.length}`;
+            document.getElementById('percentageScore').innerText = `${pct}%`;
+            document.getElementById('timeSpent').innerText = pct >= 50 ? 'Passed' : 'Review Needed';
+        }
+
+        function showSolutions() {
+            const container = document.getElementById('solutionsList');
+            container.innerHTML = '';
+            const labels = ['A', 'B', 'C', 'D'];
+
+            filteredQuestions.forEach((q, idx) => {
+                const userAnsObj = userAnswers[idx];
+                const userAnsIdx = userAnsObj !== undefined ? userAnsObj.val : null;
+                const isCorrect = userAnsIdx === q.answer;
+
+                const solCard = document.createElement('div');
+                solCard.className = `p-5 rounded-2xl border-2 ${
+                    isCorrect 
+                        ? 'border-pastel-mint bg-pastel-mint/10' 
+                        : 'border-pastel-rose bg-pastel-rose/10'
+                }`;
+
+                solCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-2 gap-2">
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full bg-white border border-gray-200 text-pastel-text">
+                            ${q.paper} • Q${idx + 1}
+                        </span>
+                        <span class="text-xs font-bold ${isCorrect ? 'text-green-700' : 'text-rose-700'}">
+                            ${isCorrect ? '✅ Correct' : '❌ Incorrect / Unanswered'}
+                        </span>
+                    </div>
+
+                    <p class="font-bold text-sm text-pastel-text mb-3">${q.question}</p>
+
+                    <div class="text-xs space-y-1 mb-3">
+                        <p class="text-pastel-text"><strong>Your Choice:</strong> ${userAnsIdx !== null ? `${labels[userAnsIdx]}.${q.options[userAnsIdx]}` : '<em class="text-pastel-muted">Not answered</em>'}</p>
+                        <p class="text-pastel-primaryDark font-bold"><strong>Correct Answer:</strong> ${labels[q.answer]}. ${q.options[q.answer]}</p>
+                    </div>
+
+                    <div class="bg-white/80 p-3 rounded-xl border border-gray-100 text-xs text-pastel-text leading-relaxed">
+                        <strong class="text-pastel-text">Explanation:</strong> ${q.rationale}
+                    </div>
+                `;
+
+                container.appendChild(solCard);
+            });
+
+            document.getElementById('solutionsModal').classList.remove('hidden');
+        }
+
+        function closeSolutions() {
+            document.getElementById('solutionsModal').classList.add('hidden');
+        }
+
+        function restartQuiz() {
+            // Re-shuffle on retake
+            filterQuestions();
+        }
+
+        window.onload = initQuiz;
+    </script>
+</body>
+</html>
